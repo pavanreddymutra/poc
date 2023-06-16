@@ -1,0 +1,131 @@
+---
+- name: Apply changes to CentOS and Ubuntu hosts
+  hosts: frontend , backend
+  become: true
+  vars:
+    ansible_user: "{{ my_username }}"
+    ansible_password: "{{ my_password }}"
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+  tasks:
+    - name: Disable SELinux on CentOS
+      ansible.builtin.selinux:
+        state: disabled
+      when: ansible_os_family == 'RedHat'
+
+    - name: Stop and disable Firewalld on CentOS
+      ansible.builtin.systemd:
+        name: firewalld
+        state: stopped
+        enabled: no
+      when: ansible_os_family == 'RedHat'
+
+  
+    - name: Stop AppArmor service OR SELINIX
+      service:
+        name: apparmor
+        state: stopped
+        enabled: no
+      when: ansible_os_family == 'Debian'
+
+    - name: Disable AppArmor
+      command: update-rc.d -f apparmor remove
+      when: ansible_os_family == 'Debian'
+
+    - name: Uninstall AppArmor packages
+      apt:
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - apparmor
+        - apparmor-utils
+        - apparmor-profiles
+      when: ansible_os_family == 'Debian'
+
+
+    - name: Stop and disable Firewalld on Ubuntu
+      ufw:
+        state: disabled
+      when: ansible_os_family == 'Debian'
+
+- name: Install and configure Nginx for frontend group
+  hosts: frontend
+  become: true
+  vars:
+    ansible_user: "{{ my_username }}"
+    ansible_password: "{{ my_password }}"
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+
+  tasks:
+    - name: Install Nginx
+      yum:
+        name: nginx
+        state: present
+
+    - name: Configure Nginx
+      template:
+        src: nginx.conf.j2
+        dest: /etc/nginx/nginx.conf
+      notify: Restart Nginx
+
+  handlers:
+    - name: Restart Nginx
+      service:
+        name: nginx
+        state: restarted
+
+
+- name: Install and configure Netdata
+  hosts: backend
+  become: true
+  vars:
+   ansible_user: "{{ my_username }}"
+   ansible_password: "{{ my_password }}"
+   ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install dependencies
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        # - zlib1g-dev
+        # - uuid-dev
+        # - libmnl-dev
+        # - gcc
+        # - make
+        # - git
+        # - autoconf
+        # - autogen
+        # - automake
+        # - pkg-config
+        # - curl
+        - netdata
+    # - name : Set bind to option in netdata.conf
+    #    lineinfile:
+    #      path: /etc/netdata/netdata.conf
+    #      regexp: '^bind socket to IP ='
+    #      line: 'bind socket to IP = *         
+    #    notify: Restart netdata
+
+  # handlers:
+  #   - name: Restart Netdata
+  #     service:
+  #       name: netdata
+  #       state: restarted
+
+    - name: Set bind to option in netdata.conf
+      lineinfile:
+        path: /etc/netdata/netdata.conf
+        regexp: '^bind socket to IP ='
+        line: 'bind socket to IP = *'
+      notify: Restart netdata
+
+  handlers:
+    - name: Restart netdata
+      service:
+        name: netdata
+        state: restarted
