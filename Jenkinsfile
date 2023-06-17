@@ -12,25 +12,20 @@ pipeline {
 
       stage('Terraform Init'){
             steps {
-               {
-                sh "terraform init -var-file dev.tfvars -input=false -force-copy"
-              }
+               
+                sh "sudo  cp /home/ubuntu/poc/poc.tfvars . &&terraform init -var-file dev.tfvars -input=false -force-copy"
+              
             }
         }
 
         stage('Terraform Plan'){
             steps {
-                     {
+                     
                       script {
                           env.CHANGES = sh (
-                              script:"terraform plan -var-file dev.tfvars -out=tfplan -input=false -detailed-exitcode" ,
+                              script:"terraform plan -var-file poc.tfvars -out=tfplan -input=false -detailed-exitcode" ,
                               returnStdout: false , returnStatus: true
                           )
-                          // Return Exit Code
-                          // 0 = Succeeded with empty diff (no changes)
-                          // 1 = Error
-                          // 2 = Succeeded with non-empty diff (changes present)
-                          // echo "Change Var: ${env.CHANGES}"
                           if (env.CHANGES == '1'){
                               sh "exit 1"
                           } else if (env.CHANGES == '0') {
@@ -40,14 +35,14 @@ pipeline {
                               echo 'CHANGES to apply!'
                           }
                        }
-                    }
+                    
 
             }
             post {
                 success {
-                         {
+                         
                         archiveArtifacts 'tfplan'
-                    }
+                    
                 }
             }
         }
@@ -87,10 +82,21 @@ pipeline {
                 }
             }
             steps {
-                    // {
-                        {
-                    sh "terraform apply -input=false -auto-approve tfplan"
-                }
+                    
+                        
+                    sh "terraform apply -var-file poc.tfvars -input=false -auto-approve"
+                
+            }
+        }
+        stage('Ansible deploy'){
+           
+            steps {
+                    
+                        
+                    sh '''
+                
+                ansible-playbook -i ansible/hosts ansible/ansible-playbook.yml -e "my_username"="testadmin" -e "my_password"="test@dmin99" '''
+                
             }
         }
     }

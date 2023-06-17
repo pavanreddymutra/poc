@@ -1,4 +1,9 @@
 #credentials
+subscription_id = "07aed701-89b6-4cb9-80b0-709afe2f7451"
+client_id       = "{{ secrets.AZURE_CLIENT_ID }}"
+client_secret   = "{{ secrets.AZURE_CLIENT_SECRET }}"
+tenant_id       = "{{ secrets.AZURE_TENANT_ID }}"
+
 
 #resource group
 location       = "eastus"
