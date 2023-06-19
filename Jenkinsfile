@@ -94,7 +94,7 @@ pipeline {
                     
                         
                     sh '''
-                sleep 15
+                sleep 60
                 ansible-playbook -i ansible/hosts ansible/ansible-playbook.yml -e "my_username"="testadmin" -e "my_password"="test@dmin99" '''
                 
             }
