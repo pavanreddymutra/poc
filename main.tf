@@ -137,7 +137,7 @@ module "ubuntu_vm" {
 resource "null_resource" "ansible_hostfile" {
   provisioner "local-exec" {
     command = <<-EOT
-    echo [frontend] > ansible/hosts  && az network public-ip list --resource-group  ${module.resource_group.name} --query [?tags.group=='frontend'].ipAddress --output tsv >> ansible/hosts &&     echo [backend] >> ansible/hosts  && az network public-ip list --resource-group  ${module.resource_group.name} --query [?tags.group=='backend'].ipAddress --output tsv >>ansible/hosts
+    echo [frontend] > ansible/hosts  && az network public-ip list --resource-group  ${module.resource_group.name} --query "[?tags.group=='frontend'].ipAddress" --output tsv >> ansible/hosts &&     echo [backend] >> ansible/hosts  && az network public-ip list --resource-group  ${module.resource_group.name} --query "[?tags.group=='backend'].ipAddress" --output tsv >>ansible/hosts
   EOT
   }
 depends_on = [
