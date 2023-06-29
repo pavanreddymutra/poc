@@ -1,0 +1,1 @@
+az vm show -g testrg -n c8.local --query "osProfile.customData" -o json
